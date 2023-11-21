@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+
+        <script src="../../dist/nanostream.webcaster.js"></script>
+
+        <link rel="stylesheet" href="./../style.css">
+
+        <title>nanoStream Webcaster API Demo</title>
+    </head>
+
+    <body>
+        <div class="main-header">
+            <a href="https://www.nanocosmos.de/v6/">
+                <img src="https://www.nanocosmos.de/v6/assets/white-nanocosmos.png" class="nano-logo" alt="nanocosmos">
+            </a>
+            <h1>[nanoStream Webcaster API] Screenshare Example</h1>
+        </div>
+
+        <button id="setup-button" onclick="doSetup()">Setup</button>
+
+        <br>
+        <video controls muted id="my-preview-video-tag-id" width="800" height="480"></video>
+
+        <h2>Use media controls</b>:  play to start broadcast; pause to stop</h2>
+
+        <div id="error-logs-out"><b>Error logs:<b></div>
+
+        <script>
+
+const {Webcaster, HelperUtils, DeviceUtils, overrideOnLogCallback} = window.WebcasterApiV6;
+
+const AUDIO_RATE_KBPS = 128;
+const VIDEO_RATE_KBPS = 2000;
+
+const TCODE_AUDIO_RATE_KBPS = 64;
+
+const MAX_LOG_LINES = 10;
+
+let client;
+
+document.addEventListener('DOMContentLoaded', async () => {
+
+    const videoTag = document.querySelector('video');
+
+    videoTag.addEventListener('play', async () => {
+        console.log('Broadcast has started.');
+        client.startBroadcast();
+    });
+
+    videoTag.addEventListener('pause', () => {
+        console.log('Broadcast has stopped.');
+        client.stopBroadcast();
+    });
+});
+
+// Firefox requires transient activation from a user gesture for getDisplayMedia,
+// that's why we need to call this function on a button click.
+async function doSetup() {
+    const errorLogsOutEl = document.getElementById('error-logs-out');
+    const setupBtn = document.getElementById('setup-button');
+    const mediaStream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
+
+    setupBtn.disabled = true;
+
+    // Config for the NanoWebcaster library
+    // Bitrates have to be set in bits per second (bps),
+    // eg. `2000000` (2 Mbps) for maxVideoBitrateBps and `128000` (128 kbs) for maxAudioBitrateBps.
+    // In below example we use HelperUtils to convert from kbs to bps.
+    let initConfig = {
+        inputCfg: {
+            mediaStream: mediaStream,
+            upstreamCfg: {
+                maxAudioBitrateBps: HelperUtils.kbps(AUDIO_RATE_KBPS),
+                maxVideoBitrateBps: HelperUtils.kbps(VIDEO_RATE_KBPS),
+                maxFramerate: 30,
+                transcodeAudioBitrateBps: HelperUtils.kbps(TCODE_AUDIO_RATE_KBPS),
+                audioVideoOnly: false,
+            },
+        },
+        ingestUrl: 'rtmp://bintu-stream.nanocosmos.de:1935/live',
+        serverUrl: 'https://bintu-webrtc.nanocosmos.de/p/webrtc',
+        previewVideoElId: 'my-preview-video-tag-id',
+    };
+
+    applyUrlParams(initConfig);
+
+    client = new Webcaster(initConfig);
+
+    overrideOnLogCallback((...msg) => {
+        if (msg[0] !== 'error') {
+                return;
+        }
+
+        if (errorLogsOutEl.children.length >= MAX_LOG_LINES) {
+            errorLogsOutEl.removeChild(errorLogsOutEl.firstChild)
+        }
+
+        const logElement = document.createElement('p');
+        logElement.textContent = msg.join(' - ');
+
+        errorLogsOutEl.appendChild(logElement);
+    });
+
+    client.setup().then((fullConfig) => {
+        const settings = client.getMediaStreamSettings();
+        console.log('Webcaster.setup done.',
+            'Full applied config:', fullConfig,
+            '-> getMediaStreamSettings:', settings);
+
+        client.startPreview();
+
+    });
+
+    client.onStateChange = () => {
+        console.log('Webcaster.onStateChange:', client.getUpstreamStatus());
+    };
+
+    client.onError = (err) => {
+        console.error('Webcaster.onError:', err);
+    };
+}
+
+function applyUrlParams(configIn) {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+
+    const maxAudioBitrateBps = urlParams.get('maxAudioBitrateBps');
+    const maxVideoBitrateBps = urlParams.get('maxVideoBitrateBps');
+    const maxFramerate = urlParams.get('maxFramerate');
+    const audioVideoOnly = urlParams.get('audioVideoOnly');
+    const transcodeAudioBitrateBps = urlParams.get('transcodeAudioBitrateBps');
+    const ingestUrl = urlParams.get('ingestUrl');
+
+    // Mandatory
+    const streamName = urlParams.get('streamName');
+    const token = urlParams.get('token');
+
+    if (!streamName) {
+        alert('streamName must be passed as a query parameter');
+    }
+
+    Object.assign(configIn.inputCfg.upstreamCfg, {
+        ...(maxAudioBitrateBps && { maxAudioBitrateBps: Number(maxAudioBitrateBps) }),
+        ...(maxVideoBitrateBps && { maxVideoBitrateBps: Number(maxVideoBitrateBps) }),
+        ...(maxFramerate && { maxFramerate: Number(maxFramerate) }),
+        ...(transcodeAudioBitrateBps && { transcodeAudioBitrateBps: Number(transcodeAudioBitrateBps) }),
+        ...(audioVideoOnly && { audioVideoOnly })
+    });
+
+    configIn.ingestUrl = ingestUrl ?? configIn.ingestUrl;
+    configIn.streamName = streamName;
+    configIn.auth = { token };
+
+    return configIn;
+};
+        </script>
+    </body>
+</html>
