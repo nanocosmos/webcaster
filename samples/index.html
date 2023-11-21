@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+
+    <script src="../vendor/json-viewer.bundle.js"></script>
+    <script src="../dist/nanostream.webcaster.js"></script>
+    <script src="main.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+    <title>nanoStream Webcaster API Demo</title>
+</head>
+
+<body>
+    <div class="main-header">
+        <a href="https://www.nanocosmos.de/v6/">
+            <img src="https://www.nanocosmos.de/v6/assets/white-nanocosmos.png" class="nano-logo" alt="nanocosmos">
+        </a>
+        <h1>nanoStream Webcaster API Demo</h1>
+    </div>
+    <div style="width: 100%;">
+
+        <div style="float: left; width: 50%">
+
+            <p>
+                <button onclick="createNew()">Create New Instance</button>
+            </p>
+
+            <h2>Preview VideoElement:</h2>
+            <br>
+            <video id="preview" muted autoplay playsinline></video>
+
+            <h2>MediaDevices:</h2>
+            <br>
+            <div id="devices"></div>
+
+            <h2>API methods:</h2>
+
+            <button onclick="startPreview()">startPreview</button>
+            <button onclick="startBroadcast()">startBroadcast</button>
+            <button onclick="stopBroadcast()">stopBroadcast</button>
+            <button onclick="dispose()">dispose</button>
+            <button onclick="recover()">recover</button>
+            <button onclick="setMuted()">setMuted</button>
+
+            <h2>WebcasterApiV6.Config:</h2>
+            <textarea id="config" rows="20"></textarea>
+
+            <p>
+                <h3>getMediaStreamSettings:</h3>
+                <br>
+                <json-viewer class="data-view" id="settings-out"></json-viewer>
+            </p>
+
+            <p>
+                <h3>getUpstreamStatus:</h3>
+                <br>
+                <json-viewer class="data-view" id="status-out"></json-viewer>
+            </p>
+
+
+            <p>
+                <h3>Metrics:</h2>
+                <br>
+                <json-viewer class="data-view" id="metrics-out"></json-viewer>
+            </p>
+
+
+            <p>
+                <h3>Error logs:</h2>
+                <br>
+                <json-viewer class="data-view" id="error-logs-out"></json-viewer>
+            </p>
+
+        </div>
+
+        <div id="player-container" style="float: right; width: 50%">
+            <!-- player iframe will be added here -->
+        </div>
+
+     </div>
+
+     <div style="clear: both"></div>
+
+</body>
+</html>
