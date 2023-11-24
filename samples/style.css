@@ -19,16 +19,26 @@ html, body {
 
 .main-header h1 {
     padding-left: 10px;
-    display:inline-block;
     color: white;
-    border-bottom: none;
+    margin-bottom: 5px;
 }
 
 .main-header img {
-    width: 80px;
+    width: 100px;
     vertical-align: middle;
     border: 0;
-    display:inline-block;
+}
+
+.main-info {
+    display: inline-grid;
+}
+
+.version-container {
+    padding-left: 10px;
+    margin-left: 20px;
+    color: white;
+    font-size: 15px;
+    opacity: 0.5;
 }
 
 iframe {
