@@ -15,7 +15,13 @@
             <a href="https://www.nanocosmos.de/v6/">
                 <img src="https://www.nanocosmos.de/v6/assets/white-nanocosmos.png" class="nano-logo" alt="nanocosmos">
             </a>
-            <h1>[nanoStream Webcaster API] Minimal Example</h1>
+            <div class="main-info">
+                <h1>[nanoStream Webcaster API] Minimal Example</h1>
+                <div class="version-container">
+                    <span id="package-version"></span>
+                    <span id="commit-sha"></span>
+                </div>
+            </div>
         </div>
 
         <br>
@@ -26,7 +32,7 @@
         <div id="error-logs-out"><b>Error logs:<b></div>
 
         <script>
-const {Webcaster, HelperUtils, DeviceUtils, overrideOnLogCallback} = window.WebcasterApiV6;
+const {Webcaster, HelperUtils, DeviceUtils, overrideOnLogCallback, VERSION, SHA} = window.WebcasterApiV6;
 
 const AUDIO_RATE_KBPS = 128;
 const VIDEO_RATE_KBPS = 2000;
@@ -41,32 +47,31 @@ const MAX_LOG_LINES = 10;
 // In below example we use HelperUtils to convert from kbs to bps.
 let initConfig = {
     inputCfg: {
-        mediaStream: null,
-        upstreamCfg: {
-            audioDeviceId: '',
-            videoDeviceId: '',
-            maxAudioBitrateBps: HelperUtils.kbps(AUDIO_RATE_KBPS),
-            maxVideoBitrateBps: HelperUtils.kbps(VIDEO_RATE_KBPS),
+        mediaStreamCfg: {
             maxFramerate: 30,
             resolution: [1280, 720],
-            audioVideoOnly: false,
             audioConstraints: {
                 autoGainControl: true,
-                channelsCount: 1,
+                channelCount: 1,
                 echoCancellation: true,
                 noiseSuppression: true
             },
-            transcodeAudioBitrateBps: HelperUtils.kbps(TCODE_AUDIO_RATE_KBPS),
         },
+        broadcastCfg: {
+            transcodeAudioBitrateBps: HelperUtils.kbps(TCODE_AUDIO_RATE_KBPS),
+            maxAudioBitrateBps: HelperUtils.kbps(AUDIO_RATE_KBPS),
+            maxVideoBitrateBps: HelperUtils.kbps(VIDEO_RATE_KBPS),
+            maxEncodingFramerate: 30,
+        }
     },
-    ingestUrl: 'rtmp://bintu-stream.nanocosmos.de:1935/live',
-    serverUrl: 'https://bintu-webrtc.nanocosmos.de/p/webrtc',
     previewVideoElId: 'my-preview-video-tag-id',
 };
 
+renderVersion();
 applyUrlParams(initConfig);
 
-var client = new Webcaster(initConfig);
+console.log('Init config: ', initConfig);
+const client = new Webcaster(initConfig);
 
 document.addEventListener('DOMContentLoaded', async () => {
     const errorLogsOutEl = document.getElementById('error-logs-out');
@@ -122,33 +127,58 @@ function applyUrlParams(configIn) {
 
     const maxAudioBitrateBps = urlParams.get('maxAudioBitrateBps');
     const maxVideoBitrateBps = urlParams.get('maxVideoBitrateBps');
+    const transcodeAudioBitrateBps = urlParams.get('transcodeAudioBitrateBps');
+    const maxEncodingFramerate = urlParams.get('maxEncodingFramerate');
+
     const maxFramerate = urlParams.get('maxFramerate');
     const audioVideoOnly = urlParams.get('audioVideoOnly');
-    const transcodeAudioBitrateBps = urlParams.get('transcodeAudioBitrateBps');
     const ingestUrl = urlParams.get('ingestUrl');
+    const serverUrl = urlParams.get('serverUrl');
+    const token = urlParams.get('token');
+
 
     // Mandatory
     const streamName = urlParams.get('streamName');
-    const token = urlParams.get('token');
 
     if (!streamName) {
         alert('streamName must be passed as a query parameter');
     }
 
-    Object.assign(configIn.inputCfg.upstreamCfg, {
-        ...(maxAudioBitrateBps && { maxAudioBitrateBps: Number(maxAudioBitrateBps) }),
-        ...(maxVideoBitrateBps && { maxVideoBitrateBps: Number(maxVideoBitrateBps) }),
+    configIn.inputCfg ??= {};
+    configIn.inputCfg.mediaStreamCfg ??= {};
+    configIn.inputCfg.broadcastCfg ??= {};
+
+    Object.assign(configIn.inputCfg.mediaStreamCfg, {
         ...(maxFramerate && { maxFramerate: Number(maxFramerate) }),
-        ...(transcodeAudioBitrateBps && { transcodeAudioBitrateBps: Number(transcodeAudioBitrateBps) }),
         ...(audioVideoOnly && { audioVideoOnly })
     });
 
+    Object.assign(configIn.inputCfg.broadcastCfg, {
+        ...(maxAudioBitrateBps && { maxAudioBitrateBps: Number(maxAudioBitrateBps) }),
+        ...(maxVideoBitrateBps && { maxVideoBitrateBps: Number(maxVideoBitrateBps) }),
+        ...(maxEncodingFramerate && { maxEncodingFramerate: Number(maxEncodingFramerate) }),
+        ...(transcodeAudioBitrateBps && { transcodeAudioBitrateBps: Number(transcodeAudioBitrateBps) }),
+    });
+
+    configIn.serverUrl = serverUrl ?? configIn.serverUrl;
     configIn.ingestUrl = ingestUrl ?? configIn.ingestUrl;
     configIn.streamName = streamName;
-    configIn.auth = { token };
+
+    if (token) {
+        configIn.auth ??= {};
+        configIn.auth.token = token;
+    }
 
     return configIn;
 };
+
+function renderVersion() {
+    const packageVersionEl = document.getElementById('package-version');
+    const commitShaEl = document.getElementById('commit-sha');
+
+    packageVersionEl.innerText = `version: ${VERSION}`;
+    commitShaEl.innerText = `commit SHA: ${SHA}`;
+}
         </script>
     </body>
 </html>

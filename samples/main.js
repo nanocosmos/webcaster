@@ -1,14 +1,17 @@
-const {Webcaster, HelperUtils, DeviceUtils, overrideOnLogCallback} = window.WebcasterApiV6;
+const { Webcaster, HelperUtils, DeviceUtils, overrideOnLogCallback, SHA, VERSION } = window.WebcasterApiV6;
 
 const AUDIO_RATE_KBPS = 128;
 const VIDEO_RATE_KBPS = 2000;
 
-const TCODE_AUDIO_RATE_KBPS = 64;
+const TRANSCO_AUDIO_RATE_KBPS = 64;
 
 const MAX_LOG_LINES = 10;
 
+const TIMEOUT_IFRAME_RELOAD_MS = 5000;
+
 let videoDeviceIndex = 0;
 let audioDeviceIndex = 0;
+let iframeReloadTimeoutId;
 
 // Config for the NanoWebcaster library.
 // Bitrates have to be set in bits per second (bps),
@@ -16,26 +19,25 @@ let audioDeviceIndex = 0;
 // In below example we use HelperUtils to convert from kbs to bps.
 let initConfig = {
     inputCfg: {
-        mediaStream: null,
-        upstreamCfg: {
+        mediaStreamCfg: {
             audioDeviceId: '',
             videoDeviceId: '',
-            maxAudioBitrateBps: HelperUtils.kbps(AUDIO_RATE_KBPS),
-            maxVideoBitrateBps: HelperUtils.kbps(VIDEO_RATE_KBPS),
             maxFramerate: 30,
             resolution: [1280, 720],
-            audioVideoOnly: false,
             audioConstraints: {
                 autoGainControl: true,
-                channelsCount: 1,
+                channelCount: 1,
                 echoCancellation: true,
                 noiseSuppression: true
             },
-            transcodeAudioBitrateBps: HelperUtils.kbps(TCODE_AUDIO_RATE_KBPS),
         },
+        broadcastCfg: {
+            transcodeAudioBitrateBps: HelperUtils.kbps(TRANSCO_AUDIO_RATE_KBPS),
+            maxAudioBitrateBps: HelperUtils.kbps(AUDIO_RATE_KBPS),
+            maxVideoBitrateBps: HelperUtils.kbps(VIDEO_RATE_KBPS),
+            maxEncodingFramerate: 30,
+        }
     },
-    ingestUrl: 'rtmp://bintu-stream.nanocosmos.de:1935/live',
-    serverUrl: 'https://bintu-webrtc.nanocosmos.de/p/webrtc',
     previewVideoElId: 'preview',
 };
 
@@ -59,7 +61,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const errorlogsOutEl = document.querySelector('#error-logs-out');
     const playerContainerEl = document.getElementById('player-container');
 
-    mountPlayerIframe(playerContainerEl, initConfig.streamName);
+    renderVersion();
+    reMountPlayerIframe(playerContainerEl, initConfig.streamName);
 
     errorlogsOutEl.data = [];
 
@@ -93,8 +96,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         audioDevicesSelect.selectedIndex = (audioDeviceIndex < audioDevices.length) ? audioDeviceIndex : 0;
 
         try {
-            initConfig.inputCfg.upstreamCfg.videoDeviceId = videoDevicesSelect.value;
-            initConfig.inputCfg.upstreamCfg.audioDeviceId = audioDevicesSelect.value;
+            initConfig.inputCfg.mediaStreamCfg.videoDeviceId = videoDevicesSelect.value;
+            initConfig.inputCfg.mediaStreamCfg.audioDeviceId = audioDevicesSelect.value;
         } catch (err) {
             console.error(`Error updating config with selected device ids: ${err.message}`);
             return;
@@ -111,8 +114,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('Selected Device index:', index);
                 try {
                     arrayIndex === 0 ?
-                        initConfig.inputCfg.upstreamCfg.audioDeviceId = deviceId
-                        : initConfig.inputCfg.upstreamCfg.videoDeviceId = deviceId;
+                        initConfig.inputCfg.mediaStreamCfg.audioDeviceId = deviceId
+                        : initConfig.inputCfg.mediaStreamCfg.videoDeviceId = deviceId;
                 } catch (err) {
                     console.error(`Error updating config with selected device id: ${err.message}`);
                     return;
@@ -124,6 +127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     overrideOnLogCallback((...msg) => {
+        // this should be part of configuration
         if (msg[0] !== 'error') {
             return;
         }
@@ -169,16 +173,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Create a Webcaster instance
+        console.log('Init config: ', initConfig);
         client = window.client = new Webcaster(initConfig);
 
-        client.setup().then(() => {
+        client.setup().then((config) => {
             const settings = client.getMediaStreamSettings();
+            console.log('Resulting config: ', config);
             console.log('Webcaster.setup done -> getMediaStreamSettings:', settings);
             settingsOutEl.data = settings;
         });
 
         client.onStateChange = () => {
-            statusOutEl.data = client.getUpstreamStatus();
+            const upstreamStatus = client.getUpstreamStatus();
+            statusOutEl.data = upstreamStatus;
+            if (upstreamStatus.gatheringState === 'complete' && !iframeReloadTimeoutId) {
+                iframeReloadTimeoutId = setTimeout(() => {
+                    reMountPlayerIframe(playerContainerEl, initConfig.streamName);
+                }, TIMEOUT_IFRAME_RELOAD_MS);
+            }
         };
 
         client.onError = (err) => {
@@ -220,6 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!assertCreated()) return;
         try {
             await client.stopBroadcast();
+            iframeReloadTimeoutId = null;
         } catch (err) {
             console.error('Error stopping broadcast:', err);
         }
@@ -233,6 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error disposing client:', err);
         } finally {
             client = null;
+            iframeReloadTimeoutId = null;
         }
     };
 
@@ -278,10 +292,13 @@ function applyUrlParams(configIn) {
 
     const maxAudioBitrateBps = urlParams.get('maxAudioBitrateBps');
     const maxVideoBitrateBps = urlParams.get('maxVideoBitrateBps');
+    const transcodeAudioBitrateBps = urlParams.get('transcodeAudioBitrateBps');
+    const maxEncodingFramerate = urlParams.get('maxEncodingFramerate');
+
     const maxFramerate = urlParams.get('maxFramerate');
     const audioVideoOnly = urlParams.get('audioVideoOnly');
-    const transcodeAudioBitrateBps = urlParams.get('transcodeAudioBitrateBps');
     const ingestUrl = urlParams.get('ingestUrl');
+    const serverUrl = urlParams.get('serverUrl');
     const token = urlParams.get('token');
 
     // Mandatory
@@ -294,26 +311,53 @@ function applyUrlParams(configIn) {
     videoDeviceIndex = urlParams.get('videoDeviceIndex') || videoDeviceIndex;
     audioDeviceIndex = urlParams.get('audioDeviceIndex') || audioDeviceIndex;
 
-    Object.assign(configIn.inputCfg.upstreamCfg, {
-        ...(maxAudioBitrateBps && { maxAudioBitrateBps: Number(maxAudioBitrateBps) }),
-        ...(maxVideoBitrateBps && { maxVideoBitrateBps: Number(maxVideoBitrateBps) }),
+    configIn.inputCfg ??= {};
+    configIn.inputCfg.mediaStreamCfg ??= {};
+    configIn.inputCfg.broadcastCfg ??= {};
+
+
+    Object.assign(configIn.inputCfg.mediaStreamCfg, {
         ...(maxFramerate && { maxFramerate: Number(maxFramerate) }),
-        ...(transcodeAudioBitrateBps && { transcodeAudioBitrateBps: Number(transcodeAudioBitrateBps) }),
         ...(audioVideoOnly && { audioVideoOnly })
     });
 
+    Object.assign(configIn.inputCfg.broadcastCfg, {
+        ...(maxAudioBitrateBps && { maxAudioBitrateBps: Number(maxAudioBitrateBps) }),
+        ...(maxVideoBitrateBps && { maxVideoBitrateBps: Number(maxVideoBitrateBps) }),
+        ...(maxEncodingFramerate && { maxEncodingFramerate: Number(maxEncodingFramerate) }),
+        ...(transcodeAudioBitrateBps && { transcodeAudioBitrateBps: Number(transcodeAudioBitrateBps) }),
+    });
+
+    configIn.serverUrl = serverUrl ?? configIn.serverUrl;
     configIn.ingestUrl = ingestUrl ?? configIn.ingestUrl;
     configIn.streamName = streamName;
-    configIn.auth = { token };
+
+    if (token) {
+        configIn.auth ??= {};
+        configIn.auth.token = token;
+    }
 
     return configIn;
 }
 
-function mountPlayerIframe(playerContainerEl, streamName) {
+function reMountPlayerIframe(playerContainerEl, streamName) {
+    if (playerContainerEl.children.length) {
+        playerContainerEl.removeChild(playerContainerEl.firstElementChild);
+    }
+
     const iframe = document.createElement('iframe');
     iframe.id = 'player';
-    const srcUrl = `https://demo.nanocosmos.de/nanoplayer/release/nanoplayer.html?bintu.streamname=${streamName}&bintu.apiurl=https://bintu.nanocosmos.de&style.width=543px&style.height=305px`;
+    iframe.allowFullscreen = true;
+    const srcUrl = `https://demo.nanocosmos.de/nanoplayer/release/nanoplayer.html?bintu.streamname=${streamName}&bintu.apiurl=https://bintu.nanocosmos.de&style.width=543px&style.height=305px&playback.latencyControlMode=balancedadaptive`;
     iframe.src = srcUrl;
 
     playerContainerEl.appendChild(iframe);
+}
+
+function renderVersion() {
+    const packageVersionEl = document.getElementById('package-version');
+    const commitShaEl = document.getElementById('commit-sha');
+
+    packageVersionEl.innerText = `version: ${VERSION}`;
+    commitShaEl.innerText = `commit SHA: ${SHA}`;
 }
