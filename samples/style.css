@@ -69,6 +69,11 @@ button {
     margin-top: 10px;
 }
 
+button:hover {
+    color: #ee830a;
+    background-color: #333333;
+}
+
 h1, h2, h3 {
     margin: 20px;
     font-weight: 500;
@@ -92,6 +97,38 @@ select {
     border: 1px solid #FFA43E;
 }
 
+.info-bar {
+    font-size: 1.2em;
+    line-height: 1em;
+    margin: 2em;
+    padding: 0.4em;
+    width: 90%;
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: column;
+    border: 1px solid #FFA43E;
+    background-color: #2a2f3a;
+}
+
+.info-label {
+    padding-left: 8px;
+    color: #ffffff;
+}
+
+.info-item {
+    padding-left: 8px;
+    color: #29b6f6;
+    background-color: rgba(41, 182, 246, 0.2);
+    background-clip: content-box;
+}
+
+.error-item {
+    padding-left: 8px;
+    color: #ffffff;
+    background-color: orangered;
+    background-clip: content-box;
+}
+
 #setup-button  {
     width: 300px;
     margin: 10px
@@ -110,7 +147,7 @@ select {
     width: 90%;
     height: auto;
     max-height: 300px;
-    object-fit: contain;
+    object-fit: scale-down;
     border: 1px solid #000;
 }
 

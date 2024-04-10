@@ -20,6 +20,8 @@
                 <div class="version-container">
                     <span id="package-version"></span>
                     <span id="commit-sha"></span>
+                    <br>
+                    <span id="server-version"></span>
                 </div>
             </div>
         </div>
@@ -28,6 +30,22 @@
         <video controls muted id="my-preview-video-tag-id" width="800" height="480"></video>
 
         <h2>Use media controls</b>:  play to start broadcast; pause to stop</h2>
+
+        <h2>Info:</h2>
+        <div class="info-bar">
+            <div>
+                <span class="info-label">instance:</span>
+                <span id="instance-status" class="info-item">none</span>
+                <span class="info-label">connectionState:</span>
+                <span id="stream-status" class="info-item">none</span>
+                <span class="info-label">reconnectionState:</span>
+                <span id="reconnection-status" class="info-item">none</span>
+            </div>
+            <br>
+            <div>
+                <span id="error-status" class="error-item"></span>
+            </div>
+        </div>
 
         <div id="error-logs-out"><b>Error logs:<b></div>
 
@@ -64,10 +82,17 @@ let initConfig = {
             maxEncodingFramerate: 30,
         }
     },
+    reconnect: true,
     previewVideoElId: 'my-preview-video-tag-id',
 };
 
-renderVersion();
+// Info elements
+let instanceStatusEl;
+let streamStatusEl;
+let reconnectionStatusEl;
+let errorStatusEl;
+
+renderClientVersion();
 applyUrlParams(initConfig);
 
 console.log('Init config: ', initConfig);
@@ -75,6 +100,11 @@ const client = new Webcaster(initConfig);
 
 document.addEventListener('DOMContentLoaded', async () => {
     const errorLogsOutEl = document.getElementById('error-logs-out');
+
+    instanceStatusEl = document.querySelector('#instance-status');
+    streamStatusEl = document.querySelector('#stream-status');
+    reconnectionStatusEl = document.querySelector('#reconnection-status');
+    errorStatusEl = document.querySelector('#error-status');
 
     overrideOnLogCallback((...msg) => {
         if (msg[0] !== 'error') {
@@ -101,25 +131,59 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         var videoTag = document.querySelector('video');
 
-        videoTag.addEventListener('play', () => {
+        videoTag.addEventListener('play', async () => {
             console.log('Broadcast has started.');
-            client.startBroadcast();
+            await client.startBroadcast();
+            clearError();
         });
 
-        videoTag.addEventListener('pause', () => {
+        videoTag.addEventListener('pause', async () => {
             console.log('Broadcast has stopped.');
-            client.stopBroadcast();
+            await client.stopBroadcast();
+            clearError();
         });
+
+        renderServerVersion(fullConfig.serverUrl);
+
+        instanceStatusEl.innerHTML = 'created';
     });
 
     client.onStateChange = () => {
-        console.log('Webcaster.onStateChange:', client.getUpstreamStatus());
+        const upstreamStatus = client.getUpstreamStatus();
+        console.log('Webcaster.onStateChange:', upstreamStatus);
+
+        streamStatusEl.innerHTML = upstreamStatus.connectionState || 'none';
     };
 
+    client.onReconnectionStateChange = (newState) => {
+        reconnectionStatusEl.innerHTML = newState;
+    };
+
+    client.onConnectionStateChange = (newState) => {
+        if (newState === 'connecting') {
+            clearError();
+        }
+    }
+
     client.onError = (err) => {
-        console.error('Webcaster.onError:', err);
+        showError('Webcaster.onError: ' + err);
     };
 });
+
+function showError(errorMsg) {
+    console.error(errorMsg);
+    errorStatusEl.innerHTML = 'Error: ' + errorMsg;
+}
+
+function clearError() {
+    errorStatusEl.innerHTML = '';
+}
+
+function clearInfo() {
+    instanceStatusEl.innerHTML = 'none';
+    streamStatusEl.innerHTML = 'none';
+    reconnectionStatusEl.innerHTML = 'none';
+}
 
 function applyUrlParams(configIn) {
     const queryString = window.location.search;
@@ -172,12 +236,23 @@ function applyUrlParams(configIn) {
     return configIn;
 };
 
-function renderVersion() {
+function renderClientVersion() {
     const packageVersionEl = document.getElementById('package-version');
     const commitShaEl = document.getElementById('commit-sha');
 
     packageVersionEl.innerText = `version: ${VERSION}`;
     commitShaEl.innerText = `commit SHA: ${SHA}`;
+}
+
+async function renderServerVersion(url) {
+    const serverVersionEl = document.getElementById('server-version');
+    let serverResponse = await fetch(url + '/status.json');
+    if (!serverResponse.ok) {
+        serverVersionEl.innerText = `server version: error fetching version, HTTP status: ${serverResponse.status}`;
+        return;
+    }
+    let responseData = await serverResponse.json();
+    serverVersionEl.innerText = `server version: ${responseData.server_version}`;
 }
         </script>
     </body>

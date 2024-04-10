@@ -115,6 +115,15 @@ export interface MetricsCredentialsConfig {
 	accountId: string;
 	accountKey: string;
 }
+/** Reconnection config */
+export interface ReconnectConfig {
+	/** Minimum delay for a reconnect attempt in seconds. Min value: 1 */
+	minDelaySec?: number;
+	/** Maximum delay for a reconnect attempt in seconds. Min value: 1 */
+	maxDelaySec?: number;
+	/** Maximum amount of successive attempts to reconnect a broken broadcast before failure. Min value: 1 */
+	maxRetries?: number;
+}
 /**
  * Main configuration interface for the API.
  */
@@ -133,25 +142,21 @@ export interface Config {
 	previewVideoElId?: Nullable<string>;
 	/** Metrics credentials */
 	metrics?: Nullable<MetricsCredentialsConfig>;
+	/** Reconnection config. */
+	reconnect?: Nullable<ReconnectConfig> | boolean;
 }
 export type ResultConfig = z.output<typeof configSchema>;
 export type ResultMutedConfig = z.infer<typeof mutedConfigSchema>;
-declare const mutedConfigSchema: z.ZodEffects<z.ZodOptional<z.ZodObject<{
-	audio: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
-	video: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
+declare const mutedConfigSchema: z.ZodOptional<z.ZodObject<{
+	audio: z.ZodOptional<z.ZodBoolean>;
+	video: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
-	audio: boolean;
-	video: boolean;
+	audio?: boolean | undefined;
+	video?: boolean | undefined;
 }, {
 	audio?: boolean | undefined;
 	video?: boolean | undefined;
-}>>, {
-	audio: boolean;
-	video: boolean;
-}, {
-	audio?: boolean | undefined;
-	video?: boolean | undefined;
-} | undefined>;
+}>>;
 declare const configSchema: z.ZodEffects<z.ZodObject<{
 	serverUrl: z.ZodEffects<z.ZodDefault<z.ZodOptional<z.ZodString>>, string, string | undefined>;
 	auth: z.ZodEffects<z.ZodOptional<z.ZodNullable<z.ZodObject<{
@@ -258,22 +263,16 @@ declare const configSchema: z.ZodEffects<z.ZodObject<{
 			audioDeviceId?: string | undefined;
 			videoDeviceId?: string | undefined;
 		} | null | undefined>;
-		muted: z.ZodEffects<z.ZodOptional<z.ZodObject<{
-			audio: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
-			video: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
+		muted: z.ZodOptional<z.ZodObject<{
+			audio: z.ZodOptional<z.ZodBoolean>;
+			video: z.ZodOptional<z.ZodBoolean>;
 		}, "strip", z.ZodTypeAny, {
-			audio: boolean;
-			video: boolean;
+			audio?: boolean | undefined;
+			video?: boolean | undefined;
 		}, {
 			audio?: boolean | undefined;
 			video?: boolean | undefined;
-		}>>, {
-			audio: boolean;
-			video: boolean;
-		}, {
-			audio?: boolean | undefined;
-			video?: boolean | undefined;
-		} | undefined>;
+		}>>;
 		broadcastCfg: z.ZodEffects<z.ZodOptional<z.ZodNullable<z.ZodObject<{
 			transcodeAudioBitrateBps: z.ZodOptional<z.ZodNumber>;
 			maxVideoBitrateBps: z.ZodOptional<z.ZodNumber>;
@@ -318,16 +317,16 @@ declare const configSchema: z.ZodEffects<z.ZodObject<{
 			audioDeviceId?: string | undefined;
 			videoDeviceId?: string | undefined;
 		} | null;
-		muted: {
-			audio: boolean;
-			video: boolean;
-		};
 		broadcastCfg: {
 			transcodeAudioBitrateBps?: number | undefined;
 			maxVideoBitrateBps?: number | undefined;
 			maxAudioBitrateBps?: number | undefined;
 			maxEncodingFramerate?: number | undefined;
 		} | null;
+		muted?: {
+			audio?: boolean | undefined;
+			video?: boolean | undefined;
+		} | undefined;
 	}, {
 		mediaStream?: unknown;
 		mediaStreamCfg?: {
@@ -374,16 +373,16 @@ declare const configSchema: z.ZodEffects<z.ZodObject<{
 			audioDeviceId?: string | undefined;
 			videoDeviceId?: string | undefined;
 		} | null;
-		muted: {
-			audio: boolean;
-			video: boolean;
-		};
 		broadcastCfg: {
 			transcodeAudioBitrateBps?: number | undefined;
 			maxVideoBitrateBps?: number | undefined;
 			maxAudioBitrateBps?: number | undefined;
 			maxEncodingFramerate?: number | undefined;
 		} | null;
+		muted?: {
+			audio?: boolean | undefined;
+			video?: boolean | undefined;
+		} | undefined;
 	}, {
 		mediaStream?: unknown;
 		mediaStreamCfg?: {
@@ -430,6 +429,50 @@ declare const configSchema: z.ZodEffects<z.ZodObject<{
 		accountId: string;
 		accountKey: string;
 	} | null | undefined>;
+	reconnect: z.ZodEffects<z.ZodUnion<[
+		z.ZodEffects<z.ZodEffects<z.ZodNullable<z.ZodOptional<z.ZodObject<{
+			minDelaySec: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
+			maxDelaySec: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
+			maxRetries: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
+		}, "strip", z.ZodTypeAny, {
+			minDelaySec: number;
+			maxDelaySec: number;
+			maxRetries: number;
+		}, {
+			minDelaySec?: number | undefined;
+			maxDelaySec?: number | undefined;
+			maxRetries?: number | undefined;
+		}>>>, {
+			minDelaySec: number;
+			maxDelaySec: number;
+			maxRetries: number;
+		} | null, {
+			minDelaySec?: number | undefined;
+			maxDelaySec?: number | undefined;
+			maxRetries?: number | undefined;
+		} | null | undefined>, {
+			minDelaySec: number;
+			maxDelaySec: number;
+			maxRetries: number;
+		} | null, {
+			minDelaySec?: number | undefined;
+			maxDelaySec?: number | undefined;
+			maxRetries?: number | undefined;
+		} | null | undefined>,
+		z.ZodEffects<z.ZodBoolean, {
+			minDelaySec: number;
+			maxDelaySec: number;
+			maxRetries: number;
+		} | null, boolean>
+	]>, {
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	} | {
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	} | null, unknown>;
 }, "strict", z.ZodTypeAny, {
 	auth: {
 		token: string;
@@ -455,22 +498,39 @@ declare const configSchema: z.ZodEffects<z.ZodObject<{
 			audioDeviceId?: string | undefined;
 			videoDeviceId?: string | undefined;
 		} | null;
-		muted: {
-			audio: boolean;
-			video: boolean;
-		};
 		broadcastCfg: {
 			transcodeAudioBitrateBps?: number | undefined;
 			maxVideoBitrateBps?: number | undefined;
 			maxAudioBitrateBps?: number | undefined;
 			maxEncodingFramerate?: number | undefined;
 		} | null;
+		muted?: {
+			audio?: boolean | undefined;
+			video?: boolean | undefined;
+		} | undefined;
 	};
 	previewVideoElId: string | null;
 	metrics: {
 		accountId: string;
 		accountKey: string;
 	};
+	reconnect: (({
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	} | {
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	}) & ({
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	} | {
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	} | undefined)) | null;
 }, {
 	serverUrl?: string | undefined;
 	auth?: {
@@ -512,6 +572,7 @@ declare const configSchema: z.ZodEffects<z.ZodObject<{
 		accountId: string;
 		accountKey: string;
 	} | null | undefined;
+	reconnect?: unknown;
 }>, {
 	auth: {
 		token: string;
@@ -537,22 +598,39 @@ declare const configSchema: z.ZodEffects<z.ZodObject<{
 			audioDeviceId?: string | undefined;
 			videoDeviceId?: string | undefined;
 		} | null;
-		muted: {
-			audio: boolean;
-			video: boolean;
-		};
 		broadcastCfg: {
 			transcodeAudioBitrateBps?: number | undefined;
 			maxVideoBitrateBps?: number | undefined;
 			maxAudioBitrateBps?: number | undefined;
 			maxEncodingFramerate?: number | undefined;
 		} | null;
+		muted?: {
+			audio?: boolean | undefined;
+			video?: boolean | undefined;
+		} | undefined;
 	};
 	previewVideoElId: string | null;
 	metrics: {
 		accountId: string;
 		accountKey: string;
 	};
+	reconnect: (({
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	} | {
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	}) & ({
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	} | {
+		minDelaySec: number;
+		maxDelaySec: number;
+		maxRetries: number;
+	} | undefined)) | null;
 }, {
 	serverUrl?: string | undefined;
 	auth?: {
@@ -594,18 +672,8 @@ declare const configSchema: z.ZodEffects<z.ZodObject<{
 		accountId: string;
 		accountKey: string;
 	} | null | undefined;
+	reconnect?: unknown;
 }>;
-export interface MediaStreamSettings {
-	audio: Nullable<MediaTrackSettings>;
-	video: Nullable<MediaTrackSettings>;
-}
-export interface UpstreamConnectionStatus {
-	readonly iceState: Nullable<RTCIceConnectionState>;
-	readonly gatheringState: Nullable<RTCIceGatheringState>;
-	readonly connectionState: Nullable<RTCPeerConnectionState>;
-	readonly localDescription: Nullable<RTCSessionDescription>;
-	readonly remoteDescription: Nullable<RTCSessionDescription>;
-}
 export type UserAgentInfo = {
 	document: {
 		origin?: string;
@@ -647,6 +715,7 @@ export type StatusInfo = {
 	peerConnectionState: string;
 	startUpTime: number;
 	totalTime: number;
+	reconnects: number;
 };
 export type MetricsFunnelResultData = {
 	clientVersion: string;
@@ -686,17 +755,47 @@ export interface RtcStatsCollectorResultEntry {
 	max?: number;
 	avg?: number;
 }
+export interface MediaStreamSettings {
+	audio: Nullable<MediaTrackSettings>;
+	video: Nullable<MediaTrackSettings>;
+}
+export interface UpstreamConnectionStatus {
+	readonly iceState: Nullable<RTCIceConnectionState>;
+	readonly gatheringState: Nullable<RTCIceGatheringState>;
+	readonly connectionState: Nullable<RTCPeerConnectionState>;
+	readonly localDescription: Nullable<RTCSessionDescription>;
+	readonly remoteDescription: Nullable<RTCSessionDescription>;
+}
+export type IsMutedStatus = NonNullable<Required<ResultMutedConfig>>;
 export type MetadataHandlerName = "onMetaData" | "onCuePoint";
+declare enum ReconnectionState {
+	/** Initial state, nothing is happening.  */
+	Idle = "idle",
+	/** Connection failed, trying to reconnect. */
+	Reconnecting = "reconnecting",
+	/** Retry limit reached, stopped.  */
+	Failed = "failed"
+}
 export declare class Webcaster implements Disposable {
 	private _upstreamConnection;
 	private _whipClient;
 	private _metricsFunnel;
 	private _config;
 	private _previewVidElList;
+	private _reconnectionState;
+	private _reconnects;
 	/**
 	 * @param {Config} config imutable. partially optional fields.
 	 */
 	constructor(config: Config);
+	/**
+	 * override this at runtime with user-app listener
+	 */
+	onReconnectionStateChange(newState: ReconnectionState): void;
+	/**
+	 * override this at runtime with user-app listener
+	 */
+	onConnectionStateChange(newState: RTCPeerConnectionState): void;
 	/**
 	 * override this at runtime with user-app listener
 	 */
@@ -750,13 +849,21 @@ export declare class Webcaster implements Disposable {
 	 * If not called before, configured value will be applied to MediaStream on setup.
 	 */
 	setMuted(isMuted: MutedConfig): void;
-	isMuted(): ResultMutedConfig;
+	isMuted(): IsMutedStatus;
 	/**
 	 * Full stop - resets everything to the pre-setup phase and stops broadcasting if it's enabled.
 	 * In order to use the Webcaster instance again - calling setup is required.
 	 * Can only be called after setup.
 	 */
 	dispose(withMediaStream?: boolean): Promise<void>;
+	/**
+	 * Try to reconnect if it's configured. It's triggered when connection fails
+	 */
+	_startReconnecting(): Promise<void>;
+	/**
+	* Attempts a single reconnect operation.
+	*/
+	_reconnect(delay: number): Promise<boolean>;
 	/**
 	 *
 	 * @param disposeMediaStream default is false, when set true will effectively stop all tracks on the current active MediaStream (if any, will not have effect before `setup` called). If that media-stream was user-provided, this will make the recovery fail therefore (attempting to reuse the thus stopped media-stream for a new broadcast session). Otherwise, a new media-stream is created, eventually based on configured constraint params.
@@ -773,6 +880,8 @@ export declare class Webcaster implements Disposable {
 	private _emitOnStateChange;
 	private _emitOnError;
 	private _emitOnMetrics;
+	private _emitOnConnectionStateChange;
+	private _emitOnReconnectionStateChange;
 	private _handleStreamError;
 	private _assertHaveMediaStream;
 	private _assertHaveRemoteDescription;
@@ -822,7 +931,7 @@ export declare class HelperUtils {
 	static isUndefined(val: any): val is undefined;
 	static isDefined(val: any): boolean;
 	static isNumber(val: any): boolean;
-	static isObject(val: any): boolean;
+	static isObject(val: any): val is object;
 	static isString(val: any): val is string;
 	static orNull<T>(val?: T): T | null;
 	static orZero(val: any): number;
@@ -850,6 +959,7 @@ export declare class HelperUtils {
 	static minBy<T>(array: T[], iteratee: (o: T) => number): T | undefined;
 	static maxBy<T>(array: T[], iteratee: (o: T) => number): T | undefined;
 	static meanBy<T>(array: T[], iteratee: (o: T) => number): number;
+	static wait: (ms: number) => Promise<unknown>;
 	/**
 	 * Assign value from source, if property is defined in init at same key,
 	 * *and* when the types correspond. Otherwise init data prop stays untouched.
@@ -867,6 +977,14 @@ export declare class HelperUtils {
 	static filterObjectByMask<T extends object>(input: object, mask: T, overrideNullRefs?: boolean): T;
 	static removeLastPathPart(inUrl: string): string;
 	static removeTrailingSlash(inUrl: string): string;
+	/**
+	 * Calculates the base of an exponential function given a range and number of steps.
+	 * @param sideA Beginning of the range
+	 * @param sideB End of the range
+	 * @param steps Number of steps to
+	 * @returns Base of the exponential function
+	 */
+	static exponentialBaseOnRange(sideA: number, sideB: number, steps: number): number;
 }
 export declare const VERSION: string;
 export declare const SHA: string;

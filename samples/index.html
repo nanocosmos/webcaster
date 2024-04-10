@@ -30,12 +30,7 @@
 
         <div style="float: left; width: 50%">
 
-            <p>
-                <button onclick="createNew()">Create New Instance</button>
-            </p>
-
             <h2>Preview VideoElement:</h2>
-            <br>
             <video id="preview" muted autoplay playsinline></video>
 
             <h2>MediaDevices:</h2>
@@ -44,6 +39,7 @@
 
             <h2>API methods:</h2>
 
+            <button onclick="createNew()">Create New Instance</button>
             <button onclick="startPreview()">startPreview</button>
             <button onclick="startBroadcast()">startBroadcast</button>
             <button onclick="stopBroadcast()">stopBroadcast</button>
@@ -51,8 +47,30 @@
             <button onclick="recover()">recover</button>
             <button onclick="setMuted()">setMuted</button>
 
+            <h2>Info:</h2>
+            <div class="info-bar">
+                <div>
+                    <span class="info-label">instance:</span>
+                    <span id="instance-status" class="info-item">none</span>
+                    <span class="info-label">connectionState:</span>
+                    <span id="stream-status" class="info-item">none</span>
+                    <span class="info-label">reconnectionState:</span>
+                    <span id="reconnection-status" class="info-item">none</span>
+                </div>
+                <br>
+                <div>
+                    <span id="error-status" class="error-item"></span>
+                </div>
+            </div>
+
             <h2>WebcasterApiV6.Config:</h2>
             <textarea id="config" rows="20"></textarea>
+
+            <p>
+                <h3>Server info:</h3>
+                <br>
+                <json-viewer class="data-view" id="server-info-out"></json-viewer>
+            </p>
 
             <p>
                 <h3>getMediaStreamSettings:</h3>

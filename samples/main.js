@@ -7,7 +7,7 @@ const TRANSCO_AUDIO_RATE_KBPS = 64;
 
 const MAX_LOG_LINES = 10;
 
-const TIMEOUT_IFRAME_RELOAD_MS = 5000;
+const TIMEOUT_IFRAME_RELOAD_MS = 1000;
 
 let videoDeviceIndex = 0;
 let audioDeviceIndex = 0;
@@ -39,9 +39,9 @@ let initConfig = {
         }
     },
     previewVideoElId: 'preview',
+    reconnect: true
 };
 
-applyUrlParams(initConfig);
 
 let createNew;
 let startPreview;
@@ -51,17 +51,28 @@ let dispose;
 let recover;
 let setMuted;
 
+// Info elements
+let instanceStatusEl;
+let streamStatusEl;
+let reconnectionStatusEl;
+let errorStatusEl;
 
 document.addEventListener('DOMContentLoaded', async () => {
 
     const configInEl = document.querySelector('#config');
+    applyUrlParams(initConfig);
     const settingsOutEl = document.querySelector('#settings-out');
     const statusOutEl = document.querySelector('#status-out');
     const metricsOutEl = document.querySelector('#metrics-out');
     const errorlogsOutEl = document.querySelector('#error-logs-out');
     const playerContainerEl = document.getElementById('player-container');
 
-    renderVersion();
+    instanceStatusEl = document.querySelector('#instance-status');
+    streamStatusEl = document.querySelector('#stream-status');
+    reconnectionStatusEl = document.querySelector('#reconnection-status');
+    errorStatusEl = document.querySelector('#error-status');
+
+    renderClientVersion();
     reMountPlayerIframe(playerContainerEl, initConfig.streamName);
 
     errorlogsOutEl.data = [];
@@ -71,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // so device labels can be properly rendered in dropdown lists.
         await navigator.mediaDevices?.getUserMedia({audio: true, video: true});
     } catch (err) {
-        console.error(`Error caling getUserMedia: ${err.message}`);
+        showError(`Error caling getUserMedia: ${err.message}`);
     }
 
     DeviceUtils.getAvailableMediaDevices().then(devices => {
@@ -99,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             initConfig.inputCfg.mediaStreamCfg.videoDeviceId = videoDevicesSelect.value;
             initConfig.inputCfg.mediaStreamCfg.audioDeviceId = audioDevicesSelect.value;
         } catch (err) {
-            console.error(`Error updating config with selected device ids: ${err.message}`);
+            showError(`Error updating config with selected device ids: ${err.message}`);
             return;
         }
         configInEl.value = HelperUtils.prettyPrintJson(initConfig);
@@ -117,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         initConfig.inputCfg.mediaStreamCfg.audioDeviceId = deviceId
                         : initConfig.inputCfg.mediaStreamCfg.videoDeviceId = deviceId;
                 } catch (err) {
-                    console.error(`Error updating config with selected device id: ${err.message}`);
+                    showError(`Error updating config with selected device id: ${err.message}`);
                     return;
                 }
                 configInEl.value = HelperUtils.prettyPrintJson(initConfig);
@@ -140,6 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ...errorlogsOutEl.data,
             HelperUtils.cloneSerializable(msg.slice(1))
         ];
+
     });
 
     // Remove streamName and auth from DOM config as they need to be passed as query params
@@ -148,15 +160,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     configInEl.addEventListener('change', onConfigChange);
     configInEl.addEventListener('keyup', onConfigChange);
+    configInEl.addEventListener('paste', onConfigChange);
     function onConfigChange(event) {
         try {
             const domConfig = JSON.parse(configInEl.value);
+            writeConfigToUrl(domConfig);
             applyUrlParams(domConfig);
 
             initConfig = domConfig;
+            clearError();
         } catch(err) {
             const errMsg = `Error updating config: ${err.message}`;
-            console.error(errMsg);
+            showError(errMsg);
             if (event.type === 'change') {
                 alert(errMsg);
             }
@@ -169,8 +184,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     createNew = () => {
         if (client) {
-            throw new Error('Client already exists, call dispose first');
+            showError('Client already exists, call dispose first');
+            return;
         }
+
+        clearError();
 
         // Create a Webcaster instance
         console.log('Init config: ', initConfig);
@@ -181,20 +199,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('Resulting config: ', config);
             console.log('Webcaster.setup done -> getMediaStreamSettings:', settings);
             settingsOutEl.data = settings;
+
+            renderServerVersion(config.serverUrl);
+
+            instanceStatusEl.innerHTML = 'created';
         });
 
-        client.onStateChange = () => {
-            const upstreamStatus = client.getUpstreamStatus();
-            statusOutEl.data = upstreamStatus;
-            if (upstreamStatus.gatheringState === 'complete' && !iframeReloadTimeoutId) {
-                iframeReloadTimeoutId = setTimeout(() => {
+
+        client.onConnectionStateChange = (newState) => {
+            if (newState === 'connecting') {
+                clearError();
+            }
+
+            if (newState === 'connected') {
+                setTimeout(() => {
                     reMountPlayerIframe(playerContainerEl, initConfig.streamName);
                 }, TIMEOUT_IFRAME_RELOAD_MS);
             }
         };
 
+        client.onStateChange = () => {
+            const upstreamStatus = client.getUpstreamStatus();
+
+            statusOutEl.data = upstreamStatus;
+            streamStatusEl.innerHTML = upstreamStatus.connectionState || 'none';
+        };
+
+        client.onReconnectionStateChange = (newState) => {
+            reconnectionStatusEl.innerHTML = newState;
+        };
+
         client.onError = (err) => {
-            console.error('Webcaster.onError:', err);
+            showError('Webcaster.onError: ' + err);
         };
 
         client.onMetrics = (metrics) => {
@@ -204,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function assertCreated() {
         if (!client) {
-            alert('Create client instance first');
+            showError('Create client instance first');
             return false;
         }
         return true;
@@ -214,8 +250,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!assertCreated()) return;
         try {
             await client.startPreview();
+            clearError();
         } catch (err) {
-            console.error('Error starting preview:', err);
+            showError('Error starting preview: ' + err);
         }
     };
 
@@ -223,8 +260,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!assertCreated()) return;
         try {
             await client.startBroadcast();
+            clearError();
         } catch (err) {
-            console.error('Error starting broadcast:', err);
+            showError('Error starting broadcast: ' + err);
         }
     };
 
@@ -233,20 +271,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             await client.stopBroadcast();
             iframeReloadTimeoutId = null;
+            clearError();
         } catch (err) {
-            console.error('Error stopping broadcast:', err);
+            showError('Error stopping broadcast: ' + err);
         }
     };
 
     dispose = async () => {
         if (!assertCreated()) return;
         try {
-            await client.dispose();
+            await client.dispose(true);
+            clearError();
         } catch (err) {
-            console.error('Error disposing client:', err);
+            showError('Error disposing client: ' + err);
         } finally {
             client = null;
             iframeReloadTimeoutId = null;
+            clearInfo();
         }
     };
 
@@ -254,8 +295,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!assertCreated()) return;
         try {
             await client.recover();
+            clearError();
         } catch (err) {
-            console.error('Error recovering client:', err);
+            showError('Error recovering client: ' + err);
         }
     };
 
@@ -266,11 +308,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 audio: true,
                 video: true
             });
+            clearError();
         } catch (err) {
-            console.error('Error recovering client:', err);
+            showError('Error recovering client: ' + err);
         }
     };
 });
+
+function showError(errorMsg) {
+    console.error(errorMsg);
+    errorStatusEl.innerHTML = 'Error: ' + errorMsg;
+}
+
+function clearError() {
+    errorStatusEl.innerHTML = '';
+}
+
+function clearInfo() {
+    instanceStatusEl.innerHTML = 'none';
+    streamStatusEl.innerHTML = 'none';
+    reconnectionStatusEl.innerHTML = 'none';
+}
 
 function createDevicesDropdown(devices) {
     // Create a select element
@@ -287,6 +345,17 @@ function createDevicesDropdown(devices) {
 }
 
 function applyUrlParams(configIn) {
+
+    let configFromUrl = readConfigFromUrl();
+    if (configFromUrl) {
+        // We can not simply asssign configFromUrl to configIn here,
+        // because configIn is passed in by reference.
+        for (const prop of Object.getOwnPropertyNames(configIn)) {
+            delete configIn[prop];
+        }
+        Object.assign(configIn, configFromUrl);
+    }
+
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
 
@@ -302,7 +371,7 @@ function applyUrlParams(configIn) {
     const token = urlParams.get('token');
 
     // Mandatory
-    const streamName = urlParams.get('streamName');
+    const streamName = urlParams.get('streamName') ?? configIn?.streamName;
 
     if (!streamName) {
         alert('streamName must be passed as a query parameter');
@@ -348,16 +417,58 @@ function reMountPlayerIframe(playerContainerEl, streamName) {
     const iframe = document.createElement('iframe');
     iframe.id = 'player';
     iframe.allowFullscreen = true;
-    const srcUrl = `https://demo.nanocosmos.de/nanoplayer/release/nanoplayer.html?bintu.streamname=${streamName}&bintu.apiurl=https://bintu.nanocosmos.de&style.width=543px&style.height=305px&playback.latencyControlMode=balancedadaptive`;
+    const srcUrl = `https://demo.nanocosmos.de/nanoplayer/release/nanoplayer.html?bintu.streamname=${streamName}&bintu.apiurl=https://bintu.nanocosmos.de&style.width=543px&style.height=305px&playback.latencyControlMode=fastadaptive`;
     iframe.src = srcUrl;
 
     playerContainerEl.appendChild(iframe);
 }
 
-function renderVersion() {
+function renderClientVersion() {
     const packageVersionEl = document.getElementById('package-version');
     const commitShaEl = document.getElementById('commit-sha');
 
-    packageVersionEl.innerText = `version: ${VERSION}`;
+    packageVersionEl.innerText = `client version: ${VERSION}`;
     commitShaEl.innerText = `commit SHA: ${SHA}`;
+}
+
+async function renderServerVersion(url) {
+    const serverInfoOutEl = document.querySelector('#server-info-out');
+
+    let serverResponse = await fetch(url + '/status.json');
+    if (!serverResponse.ok) {
+        serverInfoOutEl.data = `server version: error fetching version, HTTP status: ${serverResponse.status}`;
+        return;
+    }
+    let responseData = await serverResponse.json();
+    serverInfoOutEl.data = {
+        serverVersion: responseData.server_version
+    };
+}
+
+function readConfigFromUrl() {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const config = urlParams.get('webcasterconfig');
+
+    if (config) {
+        try {
+            return JSON.parse(atob(config));
+        } catch (err) {
+            showError(`could not parse config from url: ${err.message}`);
+        }
+    }
+}
+
+function writeConfigToUrl(config) {
+    const url = new URL(location);
+    const configClone = HelperUtils.cloneSerializable(config);
+    delete configClone?.inputCfg?.mediaStreamCfg?.audioDeviceId;
+    delete configClone?.inputCfg?.mediaStreamCfg?.videoDeviceId;
+    const configBase64 = btoa(JSON.stringify(configClone));
+    url.searchParams.set('webcasterconfig', configBase64);
+    if (typeof history.pushState === 'function') {
+        history.pushState({}, '', url);
+    } else {
+        showError('history.pushState() is not supported');
+    }
 }
