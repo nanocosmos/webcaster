@@ -1,5 +1,23 @@
 # nanoStream Webcaster API release history and change log
 
+# 6.2.0 (2024-07-15)
+
+
+### Bug Fixes
+
+* address Chrome bug in main sample where requested resolutions are too low 286761c
+* assure webcasterId does not change per instance e70b0c8
+* **ci:** update_public_repo remove freshen flag 828246c
+* replace legacy resolution changed values with counter "resolutionChangeCount" 6ae64c6
+* stop tracks of temporary MediaStream after it was created for device permissions request 4d47779
+
+
+### Features
+
+* improve error handling ea863e0
+* improved metrics reporting of session lifetime f7032b0
+* send metrics for status of MediaStream muted and document visibility e4af8a6
+
 # 6.1.0 (2024-04-10)
 
 

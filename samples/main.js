@@ -49,7 +49,7 @@ let startBroadcast;
 let stopBroadcast;
 let dispose;
 let recover;
-let setMuted;
+let toggleAudio;
 
 // Info elements
 let instanceStatusEl;
@@ -80,7 +80,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         // We call getUserMedia here in order to request device permissions once,
         // so device labels can be properly rendered in dropdown lists.
-        await navigator.mediaDevices?.getUserMedia({audio: true, video: true});
+        // Requesting a high resolution here fixes a Chrome related issue,
+        // where Chrome returns too low resolutions in subsequent calls to getUserMedia.
+        let tempStream = await navigator.mediaDevices?.getUserMedia({
+            audio: true,
+            video: {
+                width: 4096,
+                height: 2160,
+            }
+        });
+        tempStream.getTracks().forEach(track => track.stop());
     } catch (err) {
         showError(`Error caling getUserMedia: ${err.message}`);
     }
@@ -184,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     createNew = () => {
         if (client) {
-            showError('Client already exists, call dispose first');
+            showError('Error: Client already exists, call dispose first');
             return;
         }
 
@@ -192,7 +201,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Create a Webcaster instance
         console.log('Init config: ', initConfig);
-        client = window.client = new Webcaster(initConfig);
+
+        try {
+            client = window.client = new Webcaster(initConfig);
+            clearError();
+        } catch (error) {
+            showError('Failed to create new instance, look into \'Error logs\' section...');
+            console.error(`${error}`); // Formats differently if passed without explicit conversion to string
+            return;
+        }
+
 
         client.setup().then((config) => {
             const settings = client.getMediaStreamSettings();
@@ -203,6 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderServerVersion(config.serverUrl);
 
             instanceStatusEl.innerHTML = 'created';
+            updateToggleAudioBtn(client);
         });
 
 
@@ -240,7 +259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function assertCreated() {
         if (!client) {
-            showError('Create client instance first');
+            showError('Error: Create client instance first');
             return false;
         }
         return true;
@@ -273,7 +292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             iframeReloadTimeoutId = null;
             clearError();
         } catch (err) {
-            showError('Error stopping broadcast: ' + err);
+            showError('Error stopping broadcast: ' + err); // Q: Such messages to be clean as it is duplicated in error emit
         }
     };
 
@@ -301,13 +320,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    setMuted = async () => {
+    toggleAudio = async () => {
         if (!assertCreated()) return;
         try {
-            await client.setMuted({
-                audio: true,
-                video: true
-            });
+            const isMutedState = client.isMuted();
+            const newState = {
+                audio: !isMutedState.audio,
+                video: isMutedState.video
+            };
+            await client.setMuted(newState);
+            updateToggleAudioBtn(client);
             clearError();
         } catch (err) {
             showError('Error recovering client: ' + err);
@@ -317,7 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function showError(errorMsg) {
     console.error(errorMsg);
-    errorStatusEl.innerHTML = 'Error: ' + errorMsg;
+    errorStatusEl.innerHTML = errorMsg;
 }
 
 function clearError() {
@@ -471,4 +493,10 @@ function writeConfigToUrl(config) {
     } else {
         showError('history.pushState() is not supported');
     }
+}
+
+function updateToggleAudioBtn(client) {
+    const btn = document.getElementById('toggle-audio-btn');
+    const isMuted = client.isMuted();
+    btn.innerText = isMuted.audio ? 'Unmute audio' : 'Mute audio';
 }

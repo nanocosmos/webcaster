@@ -1,4 +1,4 @@
-<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>HelperUtils | webcaster-api - v6.1.0</title><meta name="description" content="Documentation for webcaster-api"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/search.js" id="tsd-search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>HelperUtils | webcaster-api - v6.2.0</title><meta name="description" content="Documentation for webcaster-api"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/search.js" id="tsd-search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
 <div class="tsd-toolbar-contents container">
 <div class="table-cell" id="tsd-search" data-base="..">
 <div class="field"><label for="tsd-search-field" class="tsd-widget tsd-toolbar-icon search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M15.7824 13.833L12.6666 10.7177C12.5259 10.5771 12.3353 10.499 12.1353 10.499H11.6259C12.4884 9.39596 13.001 8.00859 13.001 6.49937C13.001 2.90909 10.0914 0 6.50048 0C2.90959 0 0 2.90909 0 6.49937C0 10.0896 2.90959 12.9987 6.50048 12.9987C8.00996 12.9987 9.39756 12.4863 10.5008 11.6239V12.1332C10.5008 12.3332 10.5789 12.5238 10.7195 12.6644L13.8354 15.7797C14.1292 16.0734 14.6042 16.0734 14.8948 15.7797L15.7793 14.8954C16.0731 14.6017 16.0731 14.1267 15.7824 13.833ZM6.50048 10.499C4.29094 10.499 2.50018 8.71165 2.50018 6.49937C2.50018 4.29021 4.28781 2.49976 6.50048 2.49976C8.71001 2.49976 10.5008 4.28708 10.5008 6.49937C10.5008 8.70852 8.71314 10.499 6.50048 10.499Z" fill="var(--color-text)"></path></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div>
@@ -6,7 +6,7 @@
 <div id="tsd-toolbar-links"></div></div>
 <ul class="results">
 <li class="state loading">Preparing search index...</li>
-<li class="state failure">The search index is not available</li></ul><a href="../index.html" class="title">webcaster-api - v6.1.0</a></div>
+<li class="state failure">The search index is not available</li></ul><a href="../index.html" class="title">webcaster-api - v6.2.0</a></div>
 <div class="table-cell" id="tsd-widgets"><a href="#" class="tsd-widget tsd-toolbar-icon menu no-caption" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="2" fill="var(--color-text)"></rect><rect x="1" y="7" width="14" height="2" fill="var(--color-text)"></rect><rect x="1" y="11" width="14" height="2" fill="var(--color-text)"></rect></svg></a></div></div></header>
 <div class="container container-main">
 <div class="col-content">
@@ -37,6 +37,7 @@
 <a href="helpers_helperUtils.HelperUtils.html#cloneSerializable" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>clone<wbr/>Serializable</span></a>
 <a href="helpers_helperUtils.HelperUtils.html#exponentialBaseOnRange" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>exponential<wbr/>Base<wbr/>On<wbr/>Range</span></a>
 <a href="helpers_helperUtils.HelperUtils.html#filterObjectByMask" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>filter<wbr/>Object<wbr/>By<wbr/>Mask</span></a>
+<a href="helpers_helperUtils.HelperUtils.html#getRandInt" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Rand<wbr/>Int</span></a>
 <a href="helpers_helperUtils.HelperUtils.html#isBoolean" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>is<wbr/>Boolean</span></a>
 <a href="helpers_helperUtils.HelperUtils.html#isDefined" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>is<wbr/>Defined</span></a>
 <a href="helpers_helperUtils.HelperUtils.html#isEmpty" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>is<wbr/>Empty</span></a>
@@ -176,6 +177,29 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
 <li>Defined in src/helpers/helperUtils.ts:140</li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member"><a id="getRandInt" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagStatic">Static</code> <span>get<wbr/>Rand<wbr/>Int</span><a href="#getRandInt" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
+<ul class="tsd-signatures">
+<li class="tsd-signature tsd-anchor-link" id="getRandInt.getRandInt-1"><span class="tsd-kind-call-signature">get<wbr/>Rand<wbr/>Int</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">min</span>, <span class="tsd-kind-parameter">max</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><a href="#getRandInt.getRandInt-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5><span class="tsd-kind-parameter">min</span>: <span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>Lower bound (inclusively)</p>
+</div>
+<div class="tsd-comment tsd-typography"></div></li>
+<li>
+<h5><span class="tsd-kind-parameter">max</span>: <span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>Upper bound (exclusively)</p>
+</div>
+<div class="tsd-comment tsd-typography"></div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><p>A random integer number between min and max</p>
+
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
+<ul>
+<li>Defined in src/helpers/helperUtils.ts:194</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="isBoolean" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagStatic">Static</code> <span>is<wbr/>Boolean</span><a href="#isBoolean" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -185,7 +209,7 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">any</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">unknown</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-kind-parameter">val</span><span class="tsd-signature-symbol"> is </span><span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
 <ul>
 <li>Defined in src/helpers/helperUtils.ts:6</li></ul></aside></li></ul></section>
@@ -198,7 +222,7 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">any</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">unknown</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
 <ul>
 <li>Defined in src/helpers/helperUtils.ts:14</li></ul></aside></li></ul></section>
@@ -224,7 +248,7 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">any</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">unknown</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
 <ul>
 <li>Defined in src/helpers/helperUtils.ts:18</li></ul></aside></li></ul></section>
@@ -237,7 +261,7 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">any</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">unknown</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-kind-parameter">val</span><span class="tsd-signature-symbol"> is </span><span class="tsd-signature-type">object</span></h4><aside class="tsd-sources">
 <ul>
 <li>Defined in src/helpers/helperUtils.ts:22</li></ul></aside></li></ul></section>
@@ -250,7 +274,7 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">any</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">unknown</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-kind-parameter">val</span><span class="tsd-signature-symbol"> is </span><span class="tsd-signature-type">string</span></h4><aside class="tsd-sources">
 <ul>
 <li>Defined in src/helpers/helperUtils.ts:26</li></ul></aside></li></ul></section>
@@ -263,7 +287,7 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">any</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">unknown</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-kind-parameter">val</span><span class="tsd-signature-symbol"> is </span><span class="tsd-signature-type">undefined</span></h4><aside class="tsd-sources">
 <ul>
 <li>Defined in src/helpers/helperUtils.ts:10</li></ul></aside></li></ul></section>
@@ -420,7 +444,7 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">any</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">val</span>: <span class="tsd-signature-type">unknown</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">0</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">1</span></h4><p>0 only for values strict equal 0, and 1 for everything else (also non-number values).</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
@@ -481,7 +505,7 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">obj</span>: <span class="tsd-signature-type">any</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">obj</span>: <span class="tsd-signature-type">unknown</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4><aside class="tsd-sources">
 <ul>
 <li>Defined in src/helpers/helperUtils.ts:80</li></ul></aside></li></ul></section>
@@ -564,6 +588,7 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <li><a href="#cloneSerializable" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>clone<wbr/>Serializable</span></a></li>
 <li><a href="#exponentialBaseOnRange" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>exponential<wbr/>Base<wbr/>On<wbr/>Range</span></a></li>
 <li><a href="#filterObjectByMask" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>filter<wbr/>Object<wbr/>By<wbr/>Mask</span></a></li>
+<li><a href="#getRandInt" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Rand<wbr/>Int</span></a></li>
 <li><a href="#isBoolean" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>is<wbr/>Boolean</span></a></li>
 <li><a href="#isDefined" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>is<wbr/>Defined</span></a></li>
 <li><a href="#isEmpty" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>is<wbr/>Empty</span></a></li>
@@ -588,9 +613,13 @@ Input &amp; Mask do not get mutated (output is clone of mask).</p>
 <li><a href="#roundToPrecision" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>round<wbr/>To<wbr/>Precision</span></a></li>
 <li><a href="#wait" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>wait</span></a></li></ul></div></details></div>
 <div class="site-menu">
-<nav class="tsd-navigation"><a href="../index.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-namespace)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.33 16V7.24H10.77L13.446 14.74C13.43 14.54 13.41 14.296 13.386 14.008C13.37 13.712 13.354 13.404 13.338 13.084C13.33 12.756 13.326 12.448 13.326 12.16V7.24H14.37V16H12.93L10.266 8.5C10.282 8.692 10.298 8.936 10.314 9.232C10.33 9.52 10.342 9.828 10.35 10.156C10.366 10.476 10.374 10.784 10.374 11.08V16H9.33Z" fill="var(--color-text)"></path></g></svg><span>webcaster-<wbr/>api -<wbr/> v6.1.0</span></a>
+<nav class="tsd-navigation"><a href="../index.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-namespace)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.33 16V7.24H10.77L13.446 14.74C13.43 14.54 13.41 14.296 13.386 14.008C13.37 13.712 13.354 13.404 13.338 13.084C13.33 12.756 13.326 12.448 13.326 12.16V7.24H14.37V16H12.93L10.266 8.5C10.282 8.692 10.298 8.936 10.314 9.232C10.33 9.52 10.342 9.828 10.35 10.156C10.366 10.476 10.374 10.784 10.374 11.08V16H9.33Z" fill="var(--color-text)"></path></g></svg><span>webcaster-<wbr/>api -<wbr/> v6.2.0</span></a>
 <ul class="tsd-small-nested-navigation">
 <li><a href="../modules/config_types.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>config/types</span></a></li>
+<li><a href="../modules/errors_errorCodes.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>errors/error<wbr/>Codes</span></a></li>
+<li><a href="../modules/errors_errorFactory.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>errors/error<wbr/>Factory</span></a></li>
+<li><a href="../modules/errors_validationError.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>errors/validation<wbr/>Error</span></a></li>
+<li><a href="../modules/errors_webcasterError.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>errors/webcaster<wbr/>Error</span></a></li>
 <li><a href="../modules/helpers_deviceUtils.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>helpers/device<wbr/>Utils</span></a></li>
 <li>
 <details class="tsd-index-accordion" open data-key="helpers/helperUtils"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><use href="#icon-chevronDown"></use></svg><a href="../modules/helpers_helperUtils.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>helpers/helper<wbr/>Utils</span></a></summary>

@@ -674,6 +674,13 @@ declare const configSchema: z.ZodEffects<z.ZodObject<{
 	} | null | undefined;
 	reconnect?: unknown;
 }>;
+declare abstract class WebcasterError extends Error {
+	private readonly _code;
+	private readonly _metadata?;
+	get code(): number;
+	constructor(message: string, _code: number, _metadata?: unknown);
+	toString(): string;
+}
 export type UserAgentInfo = {
 	document: {
 		origin?: string;
@@ -709,6 +716,14 @@ export type StreamInfo = {
 	name: string;
 	url: string;
 };
+export type MediaStreamInfo = {
+	audioTrack?: {
+		muted: boolean;
+	};
+	videoTrack?: {
+		muted: boolean;
+	};
+};
 export type StatusInfo = {
 	iceConnectionState: string;
 	iceGatheringState: string;
@@ -719,6 +734,7 @@ export type StatusInfo = {
 };
 export type MetricsFunnelResultData = {
 	clientVersion: string;
+	webcasterId: number;
 	message?: string;
 	errorMessage?: string;
 	errorCode?: number;
@@ -726,6 +742,7 @@ export type MetricsFunnelResultData = {
 	server: ServerInfo;
 	userAgent: Nullable<UserAgentInfo>;
 	broadcastStatus: StatusInfo;
+	mediaStream?: MediaStreamInfo;
 	rtcstats: {
 		video: {
 			bitrate: RtcStatsCollectorResultEntry;
@@ -784,6 +801,9 @@ export declare class Webcaster implements Disposable {
 	private _previewVidElList;
 	private _reconnectionState;
 	private _reconnects;
+	private _webcasterId;
+	private _visibilityChangeHandler;
+	private _beforeUnloadHandler;
 	/**
 	 * @param {Config} config imutable. partially optional fields.
 	 */
@@ -803,7 +823,7 @@ export declare class Webcaster implements Disposable {
 	/**
 	 * override this at runtime with user-app listener
 	 */
-	onError(error: Error): void;
+	onError(error: WebcasterError): void;
 	/**
 	 * override this at runtime with user-app listener
 	 */
@@ -858,14 +878,14 @@ export declare class Webcaster implements Disposable {
 	dispose(withMediaStream?: boolean): Promise<void>;
 	/**
 	 * Try to reconnect if it's configured. It's triggered when connection fails
+	 * @returns Indicates successful reconnection.
 	 */
-	_startReconnecting(): Promise<void>;
+	_startReconnecting(): Promise<boolean>;
 	/**
 	* Attempts a single reconnect operation.
 	*/
 	_reconnect(delay: number): Promise<boolean>;
 	/**
-	 *
 	 * @param disposeMediaStream default is false, when set true will effectively stop all tracks on the current active MediaStream (if any, will not have effect before `setup` called). If that media-stream was user-provided, this will make the recovery fail therefore (attempting to reuse the thus stopped media-stream for a new broadcast session). Otherwise, a new media-stream is created, eventually based on configured constraint params.
 	 */
 	recover(disposeMediaStream?: boolean): Promise<void>;
@@ -876,13 +896,26 @@ export declare class Webcaster implements Disposable {
 	 */
 	sendMetadata(handlerName: MetadataHandlerName, metadata: Record<string, unknown>): Promise<void>;
 	private _init;
+	private _removeWindowEventHandlers;
+	/**
+	 * Starts reconnecting or stops the broadcast gracefully if the conneciton went to failed.
+	 */
+	private _handleConnectionFailed;
+	private _handleOnBeforeUnload;
+	private _handleVisibilityChange;
 	private _addPreviewVideoEl;
 	private _emitOnStateChange;
 	private _emitOnError;
 	private _emitOnMetrics;
 	private _emitOnConnectionStateChange;
 	private _emitOnReconnectionStateChange;
-	private _handleStreamError;
+	/**
+	 *
+	 * @param msg Message to append to error
+	 * @param errorIn Error to handle
+	 * @param metricsMessage Optional, if passed then error would be put to metrics with the message
+	 */
+	private _handleError;
 	private _assertHaveMediaStream;
 	private _assertHaveRemoteDescription;
 }
@@ -894,6 +927,27 @@ export declare class StreamUtils {
 	static getAudioTrackSettings(stream: MediaStream): Nullable<MediaTrackSettings>;
 	static getVideoTrackSettings(stream: MediaStream): Nullable<MediaTrackSettings>;
 	static getSyntheticMediaStreamConstraints(stream: MediaStream): MediaStreamConstraints;
+	/**
+	 * Sets the enable property on audio tracks to {isEnabled} value.
+	 * @param stream
+	 * @param isEnabled
+	 */
+	static setAudioTracksTo(stream: MediaStream, isEnabled: boolean): void;
+	/**
+	 * Sets the enable property on video tracks to {isEnabled} value.
+	 * @param stream
+	 * @param enabled
+	 */
+	static setVideoTracksTo(stream: MediaStream, enabled: boolean): void;
+	/**
+	 *
+	 * Checks if any audio track in a MediaStream is enabled.
+	 */
+	static audioEnabled(stream: MediaStream): Nullable<boolean>;
+	/**
+	 * Checks if any video track in a MediaStream is enabled.
+	 */
+	static videoEnabled(stream: MediaStream): Nullable<boolean>;
 }
 export interface MediaDevicePermissionQuery extends PermissionDescriptor {
 	deviceId: string;
@@ -927,19 +981,19 @@ export declare class DeviceUtils {
 }
 export declare class HelperUtils {
 	static noop: () => undefined;
-	static isBoolean(val: any): val is boolean;
-	static isUndefined(val: any): val is undefined;
-	static isDefined(val: any): boolean;
-	static isNumber(val: any): boolean;
-	static isObject(val: any): val is object;
-	static isString(val: any): val is string;
+	static isBoolean(val: unknown): val is boolean;
+	static isUndefined(val: unknown): val is undefined;
+	static isDefined(val: unknown): boolean;
+	static isNumber(val: unknown): boolean;
+	static isObject(val: unknown): val is object;
+	static isString(val: unknown): val is string;
 	static orNull<T>(val?: T): T | null;
 	static orZero(val: any): number;
 	static orInfinity(val: any, negative?: boolean): number;
 	/**
 	* @returns 0 only for values strict equal 0, and 1 for everything else (also non-number values).
 	**/
-	static oneBitQuantize(val: any): 0 | 1;
+	static oneBitQuantize(val: unknown): 0 | 1;
 	/**
 	* Number.toFixed returns a string, using this func avoids parsing back to number.
 	**/
@@ -954,7 +1008,7 @@ export declare class HelperUtils {
 	static mbps(rateMbps: number): number;
 	static cloneSerializable<T>(obj: T): T;
 	static isEmpty(obj: object): boolean;
-	static prettyPrintJson(obj: any): string;
+	static prettyPrintJson(obj: unknown): string;
 	static msToSecs(millis: number): number;
 	static minBy<T>(array: T[], iteratee: (o: T) => number): T | undefined;
 	static maxBy<T>(array: T[], iteratee: (o: T) => number): T | undefined;
@@ -985,6 +1039,13 @@ export declare class HelperUtils {
 	 * @returns Base of the exponential function
 	 */
 	static exponentialBaseOnRange(sideA: number, sideB: number, steps: number): number;
+	/**
+	 *
+	 * @param min Lower bound (inclusively)
+	 * @param max Upper bound (exclusively)
+	 * @returns A random integer number between min and max
+	 */
+	static getRandInt(min: number, max: number): number;
 }
 export declare const VERSION: string;
 export declare const SHA: string;
