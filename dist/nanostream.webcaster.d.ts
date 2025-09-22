@@ -922,6 +922,7 @@ export declare class Webcaster implements Disposable {
 export declare class StreamUtils {
 	static createStream(constraints?: MediaStreamConstraints): Promise<MediaStream>;
 	static disposeStream(stream: MediaStream): void;
+	static requestMediaPermissions(): Promise<void>;
 	static hasAudio(stream: MediaStream): boolean;
 	static hasVideo(stream: MediaStream): boolean;
 	static getAudioTrackSettings(stream: MediaStream): Nullable<MediaTrackSettings>;

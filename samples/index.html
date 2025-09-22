@@ -6,7 +6,7 @@
 
     <script src="../vendor/json-viewer.bundle.js"></script>
     <script src="../dist/nanostream.webcaster.js"></script>
-    <script src="main.js"></script>
+    <script type="module" src="main.js"></script>
 
     <link rel="stylesheet" href="style.css">
 
@@ -33,19 +33,40 @@
             <h2>Preview VideoElement:</h2>
             <video id="preview" muted autoplay playsinline></video>
 
+            <div class="main-stats">
+                <table>
+                    <tr>
+                        <th>Audio</th>
+                        <td colspan="2">Bitrate: <span id="audio-bitrate">idle</span></td>
+                    </tr>
+                    <tr>
+                        <th>Video</th>
+                        <td>Bitrate: <span id="video-bitrate">idle</span></td>
+                        <td>Framerate: <span id="video-framerate">idle</span></td>
+                    </tr>
+                    <tr>
+                        <th>Connection</th>
+                        <td>RTT: <span id="connection-rtt">idle</span></td>
+                        <td>Packet Loss: <span id="connection-packet-loss">idle</span></td>
+                    </tr>
+                </table>
+            </div>
+
+
+
             <h2>MediaDevices:</h2>
             <br>
             <div id="devices"></div>
 
             <h2>API methods:</h2>
 
-            <button onclick="createNew()">Create New Instance</button>
-            <button onclick="startPreview()">startPreview</button>
-            <button onclick="startBroadcast()">startBroadcast</button>
-            <button onclick="stopBroadcast()">stopBroadcast</button>
-            <button onclick="dispose()">dispose</button>
-            <button onclick="recover()">recover</button>
-            <button id="toggle-audio-btn" onclick="toggleAudio()">Mute audio</button>
+            <button id="create-new-btn">Create New Instance</button>
+            <button id="start-preview-btn">Start Preview</button>
+            <button id="start-broadcast-btn">Start Broadcast</button>
+            <button id="stop-broadcast-btn">Stop Broadcast</button>
+            <button id="dispose-btn">Dispose</button>
+            <button id="recover-btn">Recover</button>
+            <button id="toggle-audio-btn">Mute audio</button>
 
             <h2>Info:</h2>
             <div class="info-bar">

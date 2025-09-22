@@ -1,5 +1,16 @@
 # nanoStream Webcaster API release history and change log
 
+## 6.2.2 (2025-09-22)
+
+
+### Bug Fixes
+
+* [wcr-336] improve error visibility 7ffa0be
+* make default channelCount 2 ee2bc88
+* renderErrorInStatus bf8a417
+* renderErrorInStatus b6737c5
+* updates copyright on package.json 816103c
+
 # 6.2.0 (2024-07-15)
 
 

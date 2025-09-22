@@ -33,6 +33,34 @@ html, body {
     display: inline-grid;
 }
 
+.main-stats table {
+    width: 90%;
+    border-collapse: collapse;
+    margin: auto;
+    white-space: preserve nowrap;
+}
+
+.main-stats th, .main-stats td {
+    border: 1px solid #ddd;
+    padding: 4px;
+    text-align: left;
+}
+
+.main-stats th {
+    background-color: #f2f2f2;
+    width: 15%;
+    font-weight: bold;
+}
+
+.main-stats td {
+    width: 37.5%;
+}
+
+.main-stats span {
+    font-weight: 300
+}
+
+
 .version-container {
     padding-left: 10px;
     margin-left: 20px;
