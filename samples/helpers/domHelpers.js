@@ -166,9 +166,9 @@ export function reloadPlayerIframe(streamName) {
     const srcUrl = `https://demo.nanocosmos.de/nanoplayer/release/nanoplayer.html?entry.h5live.rtmp.streamname=${streamName}\
 &entry.bintu.apiurl=https://bintu.nanocosmos.de\
 &style.width=543px&style.height=305px\
-&playback.faststart=1\
+&playback.faststart=true\
 &playback.latencyControlMode=fastadaptive\
-&playback.metadata=1`;
+&playback.metadata=true`;
     iframe.src = srcUrl;
 
     playerContainerEl.appendChild(iframe);

@@ -1,5 +1,12 @@
 # nanoStream Webcaster API release history and change log
 
+## 6.2.3 (2025-09-26)
+
+
+### Bug Fixes
+
+* patch release e3157d6
+
 ## 6.2.2 (2025-09-22)
 
 
