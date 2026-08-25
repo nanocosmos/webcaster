@@ -15,6 +15,7 @@ import {
     renderInstanceCreatedStatus,
     initializeUIElements,
     initializeUIConfig,
+    renderAudioOnlyIndicator,
 } from './helpers/index.js';
 
 const { Webcaster, HelperUtils, DeviceUtils, overrideOnLogCallback, VERSION, SHA } = window.WebcasterApiV6;
@@ -178,6 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await client.startPreview();
 
             // DOM
+            renderAudioOnlyIndicator(initConfig.inputCfg?.mediaStreamCfg?.audioVideoOnly === 'audio');
             clearErrorFromStatus();
         } catch (err) {
             renderErrorInStatus('Error starting preview: ' + err);
@@ -220,6 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } finally {
             client = null;
             clearInfo();
+            renderAudioOnlyIndicator(false);
         }
     };
 
@@ -264,15 +267,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 async function initializeDeviceDropdowns() {
+    const audioVideoOnly = initConfig.inputCfg?.mediaStreamCfg?.audioVideoOnly;
+
     let devices;
     try {
-        devices = await DeviceUtils.getAvailableMediaDevices();
+        devices = await DeviceUtils.getAvailableMediaDevices(audioVideoOnly);
     } catch (err) {
         throw new Error(`Failed to request available devices: ${err.message}`);
     }
 
-    const videoDevices = DeviceUtils.filterDevices(devices, ['videoinput']);
-    const audioDevices = DeviceUtils.filterDevices(devices, ['audioinput']);
+    const videoDevices = audioVideoOnly === 'audio' ? null : DeviceUtils.filterDevices(devices, ['videoinput']);
+    const audioDevices = audioVideoOnly === 'video' ? null : DeviceUtils.filterDevices(devices, ['audioinput']);
 
     populateDeviceDropdowns({ videoDevices, audioDevices }, initConfig);
 }

@@ -31,7 +31,10 @@
         <div style="float: left; width: 50%">
 
             <h2>Preview VideoElement:</h2>
-            <video id="preview" muted autoplay playsinline></video>
+            <div id="preview-container">
+                <video id="preview" muted autoplay playsinline></video>
+                <div id="audio-only-indicator" hidden>🎙 audio-only</div>
+            </div>
 
             <div class="main-stats">
                 <table>

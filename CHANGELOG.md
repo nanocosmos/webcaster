@@ -1,5 +1,21 @@
 # nanoStream Webcaster API release history and change log
 
+## 6.2.4 (2026-08-25)
+
+
+### Bug Fixes
+
+* respect audioVideoOnly settings when probing permissions 3ef2d86
+* respect audioVideoOnly settings when probing permissions d2bd12c
+
+## 6.2.4-beta.1 (2026-08-20)
+
+
+### Bug Fixes
+
+* respect audioVideoOnly settings when probing permissions 3ef2d86
+* respect audioVideoOnly settings when probing permissions d2bd12c
+
 ## 6.2.3 (2025-09-26)
 
 

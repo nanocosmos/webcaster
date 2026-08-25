@@ -922,7 +922,7 @@ export declare class Webcaster implements Disposable {
 export declare class StreamUtils {
 	static createStream(constraints?: MediaStreamConstraints): Promise<MediaStream>;
 	static disposeStream(stream: MediaStream): void;
-	static requestMediaPermissions(): Promise<void>;
+	static requestMediaPermissions(audioVideoOnly?: TrackKind): Promise<void>;
 	static hasAudio(stream: MediaStream): boolean;
 	static hasVideo(stream: MediaStream): boolean;
 	static getAudioTrackSettings(stream: MediaStream): Nullable<MediaTrackSettings>;
@@ -970,7 +970,11 @@ export declare class DeviceUtils {
 	 * @param devices Devices where to check permissions can be obtained for camera & microphone.
 	 */
 	static getDevicePermissions(devices: MediaDeviceInfo[], onRejection?: ErrorCb): Promise<MediaDevicePermissionResult[]>;
-	static getAvailableMediaDevices(): Promise<MediaDeviceInfo[]>;
+	/**
+	 * @param audioVideoOnly Restricts the permission probe to the given track kind,
+	 * so e.g. a denied camera does not block enumerating audio devices in audio-only mode.
+	 */
+	static getAvailableMediaDevices(audioVideoOnly?: TrackKind): Promise<MediaDeviceInfo[]>;
 	/**
 	 * @param devices Array of device descriptors
 	 * @param deviceKinds Filter for specific kinds of devices

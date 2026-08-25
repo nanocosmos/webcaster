@@ -96,45 +96,55 @@ export function initializeUIConfig(initConfig) {
 export function populateDeviceDropdowns(devices, initConfig) {
     console.debug('Available devices:', devices);
 
-    const videoDevicesSelect = createDevicesDropdown(devices.videoDevices);
-    const audioDevicesSelect = createDevicesDropdown(devices.audioDevices);
-    const videoDevicesLabel = document.createElement('label');
-    videoDevicesLabel.innerText = 'video devices: ';
-    const audioDevicesLabel = document.createElement('label');
-    audioDevicesLabel.innerText = 'audio devices: ';
-
-    document.querySelector('#devices').appendChild(videoDevicesLabel);
-    document.querySelector('#devices').appendChild(videoDevicesSelect);
-    document.querySelector('#devices').appendChild(document.createElement('br'));
-    document.querySelector('#devices').appendChild(audioDevicesLabel);
-    document.querySelector('#devices').appendChild(audioDevicesSelect);
-
+    const devicesEl = document.querySelector('#devices');
     const deviceIndicesFromURL = getDeviceIndicesFromURL();
-    videoDevicesSelect.selectedIndex = (deviceIndicesFromURL[0] < videoDevicesSelect.length) ? deviceIndicesFromURL[0] : 0;
-    audioDevicesSelect.selectedIndex = (deviceIndicesFromURL[1] < audioDevicesSelect.length) ? deviceIndicesFromURL[1] : 0;
 
-    try {
-        initConfig.inputCfg.mediaStreamCfg.videoDeviceId = videoDevicesSelect.value;
-        initConfig.inputCfg.mediaStreamCfg.audioDeviceId = audioDevicesSelect.value;
-    } catch (err) {
-        throw new Error(`Failed to update config with selected device ids: ${err.message}`);
-    }
-    UI.configInEl.value = HelperUtils.prettyPrintJson(initConfig);
+    // A null device list means that kind is disabled (audioVideoOnly), so its dropdown is skipped
+    // and its deviceId must be removed from the config (the schema rejects empty strings)
+    const [dropdowns, skipped] = [
+        { label: 'video devices: ', deviceList: devices.videoDevices, urlIndex: deviceIndicesFromURL[0], configKey: 'videoDeviceId' },
+        { label: 'audio devices: ', deviceList: devices.audioDevices, urlIndex: deviceIndicesFromURL[1], configKey: 'audioDeviceId' },
+    ].reduce(([enabled, disabled], entry) => {
+        (entry.deviceList ? enabled : disabled).push(entry);
+        return [enabled, disabled];
+    }, [[], []]);
 
-    [audioDevicesSelect, videoDevicesSelect].forEach((select, arrayIndex) => {
+    skipped.forEach(({ configKey }) => {
+        delete initConfig.inputCfg.mediaStreamCfg[configKey];
+    });
+
+    dropdowns.forEach(({ label, deviceList, urlIndex, configKey }, index) => {
+        const select = createDevicesDropdown(deviceList);
+        const labelEl = document.createElement('label');
+        labelEl.innerText = label;
+
+        if (index > 0) {
+            devicesEl.appendChild(document.createElement('br'));
+        }
+        devicesEl.appendChild(labelEl);
+        devicesEl.appendChild(select);
+
+        select.selectedIndex = (urlIndex < select.length) ? urlIndex : 0;
+
+        try {
+            initConfig.inputCfg.mediaStreamCfg[configKey] = select.value;
+        } catch (err) {
+            throw new Error(`Failed to update config with selected device ids: ${err.message}`);
+        }
+
         select.addEventListener('change', function(event) {
             const deviceId = event.currentTarget.value;
             console.log('Selected Device ID:', deviceId);
             try {
-                arrayIndex === 0 ?
-                    initConfig.inputCfg.mediaStreamCfg.audioDeviceId = deviceId
-                    : initConfig.inputCfg.mediaStreamCfg.videoDeviceId = deviceId;
+                initConfig.inputCfg.mediaStreamCfg[configKey] = deviceId;
             } catch (err) {
                 throw new Error(`Failed to update config with selected device id: ${err.message}`);
             }
             UI.configInEl.value = HelperUtils.prettyPrintJson(initConfig);
         });
     });
+
+    UI.configInEl.value = HelperUtils.prettyPrintJson(initConfig);
 }
 
 function createDevicesDropdown(devices) {
@@ -240,6 +250,14 @@ export function clearErrorFromStatus() {
     const errorStatusEl = document.querySelector('#error-status');
 
     errorStatusEl.innerHTML = '';
+}
+
+/**
+ * Shows or hides the audio-only indicator in the preview area.
+ * @param {boolean} visible - Whether the indicator should be visible.
+ */
+export function renderAudioOnlyIndicator(visible) {
+    document.getElementById('audio-only-indicator').hidden = !visible;
 }
 
 export function clearInfo() {
